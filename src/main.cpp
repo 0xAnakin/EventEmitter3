@@ -68,9 +68,14 @@ int main(int argc, char *argv[])
     e.emit<void>("fun1");
     e.emit<double, int>("fun2", 1);
 
-    // Variadic would have been handy right here I guess?
     e.on("fun3", std::function<double(int, int)>(fun3));
     e.emit<double, int>("fun3", 1, 2);
+
+    e.on("test", std::function<void(void)>([](){
+        std::cout << "Hello, this is lambda test" << std::endl;
+    }));
+
+    e.emit<void>("test");
 
     return 0;
 }
