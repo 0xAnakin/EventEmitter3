@@ -4,6 +4,25 @@
 #include <functional>
 #include <unordered_map>
 
+class Person
+{
+private:
+    std::string name;
+    int age;
+public:
+    Person(const std::string &p_name) : name(p_name) {}
+    ~Person() {}
+    void introduce()
+    {
+        std::cout << "Hi I'm a Person and my name is " << this->name << std::endl;
+    }
+    void setAge(const int &age)
+    {
+        this->age = age;
+        std::cout << "Hi I'm " << this->name << " and I'm " << this->age << std::endl;
+    }    
+};
+
 class EventEmitter
 {
 private:
@@ -17,34 +36,26 @@ public:
         events[eventName] = eventCallback;
     }
 
-    // Not needed since the function below now uses variadic templates
-    // template <typename R>
-    // R emit(const std::string &eventName)
-    // {
-    //     const std::any &eventCallback = events[eventName];
-    //     return std::any_cast<std::function<R(void)>>(eventCallback)();
-    // }
-
     template <typename R, typename... Args>
     R emit(const std::string &eventName, Args &&...args)
     {
         const std::any &eventCallback = events[eventName];
-        return std::any_cast<std::function<R(Args...)>>(eventCallback)(std::forward<Args>(args)...);
+        return std::any_cast<std::function<R(Args...)>>(eventCallback)(std::forward<Args>(std::move(args))...);
     }
 
-    virtual ~EventEmitter() {}
+    ~EventEmitter() {}
 };
 
 void fun1()
 {
-    std::cout << "fun1: no arguments" << std::endl;
+    std::cout << "function fun1 with no arguments" << std::endl;
 }
 
 double fun2(int i)
 {
     double r = double(i);
 
-    std::cout << "fun2: " << r << std::endl;
+    std::cout << "function fun2 with one argument " << i << std::endl;
 
     return r;
 }
@@ -53,29 +64,56 @@ double fun3(int x, int y)
 {
     double r = double(x + y);
 
-    std::cout << "fun3: " << r << std::endl;
+    std::cout << "function fun3 with two arguments " << x << " and " << y << std::endl;
 
     return r;
 }
 
 int main(int argc, char *argv[])
 {
+    
     EventEmitter e;
 
-    e.on("fun1", std::function<void(void)>(fun1));
-    e.on("fun2", std::function<double(int)>(fun2));
+    // No argument
 
+    e.on("fun1", std::function<void(void)>(fun1));
     e.emit<void>("fun1");
+
+    // 1 argument
+
+    e.on("fun2", std::function<double(int)>(fun2));
     e.emit<double, int>("fun2", 1);
+
+    // 2 arguments
 
     e.on("fun3", std::function<double(int, int)>(fun3));
     e.emit<double, int>("fun3", 1, 2);
 
-    e.on("test", std::function<void(void)>([](){
+    // Lambda test
+
+    e.on("lambda", std::function<void(void)>([](){
         std::cout << "Hello, this is lambda test" << std::endl;
     }));
+    e.emit<void>("lambda");
 
-    e.emit<void>("test");
+    // Class member test 1
+
+    Person p = Person("Peter");
+    
+    e.on("member1", std::function<void(void)>(std::bind(&Person::introduce, p)));
+    e.emit<void>("member1");
+
+    // Class member test 2
+
+    e.on("member2", std::function<void(void)>(std::bind(&Person::setAge, p, 35)));
+    e.emit<void>("member2");    
+    
+    // Class member test 3
+
+    e.on("member3", std::function<void(int)>([&](int age){
+        p.setAge(age);
+    }));
+    e.emit<void>("member3", 36);
 
     return 0;
 }
