@@ -33,28 +33,22 @@ enum EventHandlerType
     ONCE
 };
 
-struct EventHandler
-{
-    EventHandlerType type;
-    EventHandlerCallback callback;
-};
-
 class EventEmitter
 {
 private:
-    std::unordered_map<std::string, std::vector<std::tuple<EventHandlerType, EventHandlerCallback>>> events;
+    std::unordered_map<std::string, std::vector<std::tuple<EventHandlerCallback, EventHandlerType>>> events;
 
 public:
     EventEmitter() {}
 
     void on(const std::string &eventName, const std::any &eventCallback)
     {
-        this->events[eventName].emplace_back(std::make_tuple(ON, eventCallback));
+        this->events[eventName].emplace_back(std::make_tuple(eventCallback, ON));
     }
 
     void once(const std::string &eventName, const std::any &eventCallback)
     {
-        this->events[eventName].emplace_back(std::make_tuple(ONCE, eventCallback));
+        this->events[eventName].emplace_back(std::make_tuple(eventCallback, ONCE));
     }    
 
     template <typename... Args>
@@ -63,13 +57,13 @@ public:
         if (this->events.find(eventName) != this->events.end())
         {
             
-            std::vector<std::tuple<EventHandlerType, EventHandlerCallback>> &eventHandlers = events[eventName];
+            std::vector<std::tuple<EventHandlerCallback, EventHandlerType>> &eventHandlers = events[eventName];
             
-            for (std::vector<std::tuple<EventHandlerType, EventHandlerCallback>>::iterator it = eventHandlers.begin(); it != eventHandlers.end();) {
+            for (std::vector<std::tuple<EventHandlerCallback, EventHandlerType>>::iterator it = eventHandlers.begin(); it != eventHandlers.end();) {
 
-                std::any_cast<std::function<void(Args...)>>(std::get<1>(*it))(std::forward<Args>(std::move(args))...);
+                std::any_cast<std::function<void(Args...)>>(std::get<0>(*it))(std::forward<Args>(std::move(args))...);
 
-                if (std::get<0>(*it) == ONCE) {
+                if (std::get<1>(*it) == ONCE) {
                     it = eventHandlers.erase(it);
                 } else {
                     ++it;
@@ -110,48 +104,48 @@ int main(int argc, char *argv[])
 
     EventEmitter e;
     
-    // No argument
+    // No argument & once testing
 
     e.once("fun1", std::function<void(void)>(fun1));
     e.on("fun1", std::function<void(void)>(fun1));
     e.emit("fun1");
     e.emit("fun1");
 
-    // // 1 argument
+    // 1 argument
 
-    // e.on("fun2", std::function<void(int)>(fun2));
-    // e.emit<int>("fun2", 1);
+    e.on("fun2", std::function<void(int)>(fun2));
+    e.emit<int>("fun2", 1);
 
-    // // 2 arguments
+    // 2 arguments
 
-    // e.on("fun3", std::function<void(int, int)>(fun3));
-    // e.emit<int>("fun3", 1, 2);
+    e.on("fun3", std::function<void(int, int)>(fun3));
+    e.emit<int>("fun3", 1, 2);
 
-    // // Lambda test
+    // Lambda test
 
-    // e.on("lambda", std::function<void(void)>([]() { 
-    //     std::cout << "Hello, this is lambda test" << std::endl; 
-    // }));
-    // e.emit("lambda");
+    e.on("lambda", std::function<void(void)>([]() { 
+        std::cout << "Hello, this is lambda test" << std::endl; 
+    }));
+    e.emit("lambda");
 
-    // // Class member test 1
+    // Class member test 1
 
-    // Person p = Person("Peter");
+    Person p = Person("Peter");
 
-    // e.on("member1", std::function<void(void)>(std::bind(&Person::introduce, p)));
-    // e.emit("member1");
+    e.on("member1", std::function<void(void)>(std::bind(&Person::introduce, p)));
+    e.emit("member1");
 
-    // // Class member test 2
+    // Class member test 2
 
-    // e.on("member2", std::function<void(void)>(std::bind(&Person::setAge, p, 36)));
-    // e.emit("member2");
+    e.on("member2", std::function<void(void)>(std::bind(&Person::setAge, p, 36)));
+    e.emit("member2");
 
-    // // Class member test 3
+    // Class member test 3
 
-    // e.on("member3", std::function<void(int)>([&](int &&age){ 
-    //     p.setAge(age); 
-    // }));
-    // e.emit("member3", 36);
+    e.on("member3", std::function<void(int)>([&](int &&age){ 
+        p.setAge(age); 
+    }));
+    e.emit("member3", 36);
 
     return 0;
 }
