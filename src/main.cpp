@@ -42,7 +42,6 @@ struct EventHandler
 class EventEmitter
 {
 private:
-    // std::unordered_map<std::string, std::any> events;
     std::unordered_map<std::string, std::vector<std::tuple<EventHandlerType, EventHandlerCallback>>> events;
 
 public:
