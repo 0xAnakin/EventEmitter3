@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
     // Class member test 2
 
-    e.on("member2", std::function<void(void)>(std::bind(&Person::setAge, p, 35)));
+    e.on("member2", std::function<void(void)>(std::bind(&Person::setAge, p, 36)));
     e.emit<void>("member2");    
     
     // Class member test 3
