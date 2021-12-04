@@ -1,5 +1,6 @@
 #include <any>
 #include <tuple>
+#include <deque>
 #include <string>
 #include <iostream>
 #include <functional>
@@ -34,7 +35,7 @@ enum EventHandlerType
 class EventEmitter
 {
 private:
-    std::unordered_map<std::string, std::vector<std::tuple<std::any, EventHandlerType>>> events;
+    std::unordered_map<std::string, std::deque<std::tuple<std::any, EventHandlerType>>> events;
 
 public:
     EventEmitter() {}
@@ -55,9 +56,9 @@ public:
         if (this->events.find(eventName) != this->events.end())
         {
             
-            std::vector<std::tuple<std::any, EventHandlerType>> &eventHandlers = events[eventName];
+            std::deque<std::tuple<std::any, EventHandlerType>> &eventHandlers = events[eventName];
             
-            for (std::vector<std::tuple<std::any, EventHandlerType>>::iterator it = eventHandlers.begin(); it != eventHandlers.end();) {
+            for (std::deque<std::tuple<std::any, EventHandlerType>>::iterator it = eventHandlers.begin(); it != eventHandlers.end();) {
 
                 std::any_cast<std::function<void(Args...)>>(std::get<0>(*it))(std::forward<Args>(std::move(args))...); // not sure if std::move is a good idea here
 
