@@ -17,12 +17,12 @@ public:
     ~Person() {}
     void introduce()
     {
-        std::cout << "Hi I'm a Person and my name is " << this->name << std::endl;
+        std::cout << "Hey I'm a Person and my name is " << this->name << std::endl;
     }
     void setAge(const int &age)
     {
         this->age = age;
-        std::cout << "Hi I'm " << this->name << " and I'm " << this->age << std::endl;
+        std::cout << "Hey I'm " << this->name << " and I'm " << this->age << std::endl;
     }
 };
 
@@ -42,36 +42,37 @@ public:
 
     void on(const std::string &eventName, const std::any &eventCallback)
     {
-        this->events[eventName].emplace_back(std::make_tuple(eventCallback, ON));
+        this->events[eventName].emplace_back(eventCallback, ON);
     }
 
     void once(const std::string &eventName, const std::any &eventCallback)
     {
-        this->events[eventName].emplace_back(std::make_tuple(eventCallback, ONCE));
-    }    
+        this->events[eventName].emplace_back(eventCallback, ONCE);
+    }
 
     template <typename... Args>
     void emit(const std::string &eventName, Args &&...args)
     {
         if (this->events.find(eventName) != this->events.end())
         {
-            
+
             std::deque<std::tuple<std::any, EventHandlerType>> &eventHandlers = events[eventName];
-            
-            for (std::deque<std::tuple<std::any, EventHandlerType>>::iterator it = eventHandlers.begin(); it != eventHandlers.end();) {
+
+            for (std::deque<std::tuple<std::any, EventHandlerType>>::iterator it = eventHandlers.begin(); it != eventHandlers.end();)
+            {
 
                 std::any_cast<std::function<void(Args...)>>(std::get<0>(*it))(std::forward<Args>(std::move(args))...); // not sure if std::move is a good idea here
 
-                if (std::get<1>(*it) == ONCE) {
+                if (std::get<1>(*it) == ONCE)
+                {
                     it = eventHandlers.erase(it);
-                } else {
+                }
+                else
+                {
                     ++it;
                 }
-
             }
-
         }
-        
     }
 
     ~EventEmitter() {}
@@ -87,7 +88,6 @@ void fun2(int i)
     double r = double(i);
 
     std::cout << "function fun2 with one argument " << i << std::endl;
-
 }
 
 void fun3(int x, int y)
@@ -95,14 +95,13 @@ void fun3(int x, int y)
     double r = double(x + y);
 
     std::cout << "function fun3 with two arguments " << x << " and " << y << std::endl;
-
 }
 
 int main(int argc, char *argv[])
 {
 
     EventEmitter e;
-    
+
     // No argument & once testing
 
     e.once("fun1", std::function<void(void)>(fun1));
@@ -118,11 +117,12 @@ int main(int argc, char *argv[])
     // 2 arguments
 
     e.on("fun3", std::function<void(int, int)>(fun3));
-    e.emit<int>("fun3", 1, 2);
+    int a = 2;
+    e.emit<int>("fun3", 1, std::move(a));
 
     // Lambda test
 
-    e.on("lambda", std::function<void(void)>([]() { 
+    e.on("lambda", std::function<void(void)>([](){ 
         std::cout << "Hello, this is lambda test" << std::endl; 
     }));
     e.emit("lambda");
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 
     // Class member test 3
 
-    e.on("member3", std::function<void(int)>([&](int &&age){ 
+    e.on("member3", std::function<void(int)>([&](int &&age) { 
         p.setAge(age); 
     }));
     e.emit("member3", 36);
