@@ -114,12 +114,11 @@ int main(int argc, char *argv[])
     e.on("fun2", std::function<void(int)>(fun2));
     e.emit<int>("fun2", 1);
 
-    // 2 arguments, one of them variable
+    // 2 arguments
 
-    int a = 2;
+    int num = 2;
     e.on("fun3", std::function<void(int, int)>(fun3));
-    e.emit<int>("fun3", 1, a);
-
+    e.emit<int>("fun3", 1, std::move(num));
 
     // Lambda test
 
