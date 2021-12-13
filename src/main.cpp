@@ -56,12 +56,12 @@ public:
         if (this->events.find(eventName) != this->events.end())
         {
 
-            std::deque<std::tuple<std::any, EventHandlerType>> &eventHandlers = events[eventName];
+            std::deque<std::tuple<std::any, EventHandlerType>> &eventHandlers = this->events[eventName];
 
             for (std::deque<std::tuple<std::any, EventHandlerType>>::iterator it = eventHandlers.begin(); it != eventHandlers.end();)
             {
 
-                std::any_cast<std::function<void(Args...)>>(std::get<0>(*it))(std::forward<Args>(std::move(args))...); // not sure if std::move is a good idea here
+                std::any_cast<std::function<void(Args...)>>(std::get<0>(*it))(std::forward<Args>(args)...); // not sure if std::move is a good idea here
 
                 if (std::get<1>(*it) == ONCE)
                 {
@@ -114,11 +114,12 @@ int main(int argc, char *argv[])
     e.on("fun2", std::function<void(int)>(fun2));
     e.emit<int>("fun2", 1);
 
-    // 2 arguments
+    // 2 arguments, one of them variable
 
-    e.on("fun3", std::function<void(int, int)>(fun3));
     int a = 2;
-    e.emit<int>("fun3", 1, std::move(a));
+    e.on("fun3", std::function<void(int, int)>(fun3));
+    e.emit<int>("fun3", 1, a);
+
 
     // Lambda test
 
